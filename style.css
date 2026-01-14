@@ -1,11 +1,21 @@
-* { box-sizing: border-box; }
-body {
+* {
+  box-sizing: border-box;
+}
+
+html, body {
   margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+body {
   font-family: system-ui, -apple-system, Arial;
   background: #0f1220;
   color: #fff;
-  height: 100vh;
 }
+
 #app {
   height: 100%;
   display: flex;
@@ -15,32 +25,38 @@ body {
   padding: 16px;
 }
 
+/* ===== TOP ===== */
 .top {
   width: 100%;
   display: flex;
   justify-content: space-between;
-  opacity: .9;
+  opacity: 0.9;
+  font-size: 14px;
 }
 
+/* ===== HERO ===== */
 .hero {
   position: relative;
   width: 80%;
   max-width: 360px;
-  aspect-ratio: 1/1;
+  aspect-ratio: 1 / 1;
   display: flex;
   align-items: center;
   justify-content: center;
 }
+
 .hero img {
   width: 100%;
   border-radius: 50%;
   animation: idle 4s ease-in-out infinite;
 }
+
 @keyframes idle {
-  0%,100% { transform: scale(1); }
+  0%, 100% { transform: scale(1); }
   50% { transform: scale(1.02); }
 }
 
+/* ===== FX ===== */
 .fx {
   position: absolute;
   inset: 0;
@@ -48,45 +64,47 @@ body {
   pointer-events: none;
 }
 
+.pulse {
+  animation: pulse 0.4s ease;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 rgba(255,255,255,0); }
+  50% { box-shadow: 0 0 30px rgba(255,255,255,0.6); }
+  100% { box-shadow: 0 0 0 rgba(255,255,255,0); }
+}
+
+/* ===== PROGRESS ===== */
 .progress {
   width: 100%;
 }
+
 .xp-bar {
   width: 100%;
   height: 10px;
-  background: rgba(255,255,255,.15);
+  background: rgba(255,255,255,0.15);
   border-radius: 8px;
   overflow: hidden;
 }
+
 #xpFill {
   height: 100%;
   width: 0%;
-  background: linear-gradient(90deg,#7cf,#6f6);
-  transition: width .4s ease;
+  background: linear-gradient(90deg, #7cf, #6f6);
+  transition: width 0.4s ease;
 }
+
 .xp-text {
   margin-top: 6px;
   text-align: center;
-  opacity: .85;
+  opacity: 0.85;
+  font-size: 14px;
 }
 
+/* ===== STATUS ===== */
 .status {
-  min-height: 24px;
+  min-height: 32px;
   text-align: center;
-  opacity: .9;
-}
-
-.pulse {
-  animation: pulse .4s ease;
-}
-@keyframes pulse {
-  0% { box-shadow: 0 0 0 rgba(255,255,255,0); }
-  50% { box-shadow: 0 0 30px rgba(255,255,255,.6); }
-  100% { box-shadow: 0 0 0 rgba(255,255,255,0); }
-}
-html, body {
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-  overscroll-behavior: none;
+  opacity: 0.9;
+  font-size: 15px;
 }

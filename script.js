@@ -51,6 +51,7 @@ let fragments = Number(localStorage.getItem("fragments")) || 0;
 let streak = Number(localStorage.getItem("streak")) || 0;
 let lastDay = localStorage.getItem("lastDay") || "";
 let day = JSON.parse(localStorage.getItem("day")) || newDay();
+let lastTaskText = localStorage.getItem("lastTaskText") || "";
 
 // ===== ЭЛЕМЕНТЫ =====
 const avatarBox = document.getElementById("avatarBox");
@@ -128,38 +129,44 @@ function render() {
   levelEl.textContent = lvl;
   streakEl.textContent = streak;
   xpFill.style.width = Math.min((cur / need) * 100, 100) + "%";
-  xpText.textContent = ${cur} / ${need} XP;
+  xpText.textContent = `${cur} / ${need} XP`;
 
   if (canActivate()) activateTask();
 
   if (day.task) {
     statusText.textContent = day.task;
   } else if (day.done >= TASKS_PER_DAY) {
-    statusText.textContent = "Сегодня ты стал лучше 💙";
+    statusText.textContent = lastTaskText
+      ? `Последний шаг: ${lastTaskText}`
+      : "Сегодня ты стал лучше 💙";
   } else {
     const m = Math.ceil((day.nextAt - Date.now()) / 60000);
-    statusText.textContent = Следующий шаг через ${m} мин;
+    statusText.textContent = `Следующий шаг через ${m} мин`;
   }
 
   localStorage.setItem("xp", xp);
   localStorage.setItem("fragments", fragments);
   localStorage.setItem("day", JSON.stringify(day));
-}
-
-// ===== ТАП =====
+  localStorage.setItem("lastTaskText", lastTaskText);
+}// ===== ТАП =====
 avatarBox.addEventListener("click", () => {
-  fx.classList.remove("pulse");
-  void fx.offsetWidth;
-  fx.classList.add("pulse");
+  if (fx) {
+    fx.classList.remove("pulse");
+    void fx.offsetWidth;
+    fx.classList.add("pulse");
+  }
 
   if (tg) tg.HapticFeedback.impactOccurred("light");
+
   if (day.task) {
     xp += XP_TASK;
     day.done++;
+
+    lastTaskText = day.task;
     day.task = null;
     day.nextAt = Date.now() + MIN_DELAY_HOURS * 3600000;
-    statusText.textContent =
-      MESSAGES_TASK[Math.floor(Math.random() * MESSAGES_TASK.length)];
+
+    statusText.textContent = `✅ Выполнено: ${lastTaskText}  +${XP_TASK} XP`;
   } else {
     if (fragments < FRAG_LIMIT) {
       fragments++;
@@ -176,4 +183,3 @@ avatarBox.addEventListener("click", () => {
 // ===== СТАРТ =====
 askGenderIfNeeded();
 render();
-  
