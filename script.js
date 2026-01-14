@@ -1,6 +1,5 @@
 // ===== TELEGRAM =====
 const tg = window.Telegram?.WebApp;
-
 if (tg) {
   tg.ready();
   tg.expand();
@@ -28,6 +27,7 @@ function askGenderIfNeeded() {
 
 // ===== НАСТРОЙКИ =====
 const XP_TASK = 10;
+const BONUS_XP = 5;
 const FRAG_LIMIT = 20;
 const TASKS_PER_DAY = 3;
 const MIN_DELAY_HOURS = 2;
@@ -42,7 +42,6 @@ const TASKS = [
   "Назови одну вещь, за которую благодарен"
 ];
 
-const MESSAGES_TASK = ["Хороший шаг", "Ты растёшь", "+XP"];
 const MESSAGES_IDLE = ["Ты в потоке", "Сегодня всё выполнено"];
 
 // ===== ХРАНЕНИЕ =====
@@ -52,6 +51,7 @@ let streak = Number(localStorage.getItem("streak")) || 0;
 let lastDay = localStorage.getItem("lastDay") || "";
 let day = JSON.parse(localStorage.getItem("day")) || newDay();
 let lastTaskText = localStorage.getItem("lastTaskText") || "";
+let bonusXP = Number(localStorage.getItem("bonusXP")) || 0;
 
 // ===== ЭЛЕМЕНТЫ =====
 const avatarBox = document.getElementById("avatarBox");
@@ -99,6 +99,7 @@ function activateTask() {
   if (day.done >= TASKS_PER_DAY) return;
   day.task = TASKS[Math.floor(Math.random() * TASKS.length)];
   day.nextAt = 0;
+  fadeText(day.task);
 }
 
 function canActivate() {
@@ -114,6 +115,28 @@ function getAvatarSrc(level) {
   }
 }
 
+// ===== UX FADE =====
+function fadeText(text) {
+  statusText.style.opacity = 0;
+  setTimeout(() => {
+    statusText.textContent = text;
+    statusText.style.opacity = 1;
+  }, 200);
+}
+
+// ===== БОНУСЫ =====
+function checkFragmentsBonus() {
+  if (fragments > 0 && fragments % 10 === 0) {
+    if (Math.random() < 0.5) {
+      bonusXP += BONUS_XP;
+      fadeText(`✨ Бонус: +${BONUS_XP} XP к следующему шагу`);
+    } else {
+      day.nextAt = Math.max(0, day.nextAt - 3600000);
+      fadeText("⏱ Бонус: ожидание сокращено на 1 час");
+    }
+  }
+}
+
 // ===== РЕНДЕР =====
 function render() {
   checkDay();
@@ -121,7 +144,7 @@ function render() {
   const lvl = levelByXP(xp);
   avatar.src = getAvatarSrc(lvl);
 
-  const prev = xpForLevel(lvl);
+  const prev = lvl === 1 ? 0 : xpForLevel(lvl);
   const next = xpForLevel(lvl + 1);
   const cur = xp - prev;
   const need = next - prev;
@@ -130,50 +153,46 @@ function render() {
   streakEl.textContent = streak;
   xpFill.style.width = Math.min((cur / need) * 100, 100) + "%";
   xpText.textContent = `${cur} / ${need} XP`;
-
   if (canActivate()) activateTask();
 
-  if (day.task) {
-    statusText.textContent = day.task;
-  } else if (day.done >= TASKS_PER_DAY) {
-    statusText.textContent = lastTaskText
-      ? `Последний шаг: ${lastTaskText}`
-      : "Сегодня ты стал лучше 💙";
-  } else {
-    const m = Math.ceil((day.nextAt - Date.now()) / 60000);
-    statusText.textContent = `Следующий шаг через ${m} мин`;
+  if (!day.task) {
+    fadeText(
+      day.done >= TASKS_PER_DAY
+        ? `✨ Фрагменты: ${fragments} / ${FRAG_LIMIT}`
+        : `Следующий шаг скоро`
+    );
   }
 
   localStorage.setItem("xp", xp);
   localStorage.setItem("fragments", fragments);
+  localStorage.setItem("bonusXP", bonusXP);
   localStorage.setItem("day", JSON.stringify(day));
   localStorage.setItem("lastTaskText", lastTaskText);
-}// ===== ТАП =====
+}
+
+// ===== ТАП =====
 avatarBox.addEventListener("click", () => {
-  if (fx) {
-    fx.classList.remove("pulse");
-    void fx.offsetWidth;
-    fx.classList.add("pulse");
-  }
+  fx.classList.remove("pulse");
+  void fx.offsetWidth;
+  fx.classList.add("pulse");
 
   if (tg) tg.HapticFeedback.impactOccurred("light");
 
   if (day.task) {
-    xp += XP_TASK;
+    xp += XP_TASK + bonusXP;
+    bonusXP = 0;
     day.done++;
-
     lastTaskText = day.task;
     day.task = null;
     day.nextAt = Date.now() + MIN_DELAY_HOURS * 3600000;
-
-    statusText.textContent = `✅ Выполнено: ${lastTaskText}  +${XP_TASK} XP`;
+    fadeText(`✅ Последний шаг: ${lastTaskText}`);
   } else {
     if (fragments < FRAG_LIMIT) {
       fragments++;
-      statusText.textContent =
-        MESSAGES_IDLE[Math.floor(Math.random() * MESSAGES_IDLE.length)];
+      checkFragmentsBonus();
+      fadeText(`✨ Фрагменты: ${fragments} / ${FRAG_LIMIT}`);
     } else {
-      statusText.textContent = "Хватит на сегодня ✨";
+      fadeText("Хватит на сегодня ✨");
     }
   }
 
