@@ -1,106 +1,109 @@
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 html, body {
   margin: 0;
   padding: 0;
   height: 100%;
-  overflow: hidden;
-  overscroll-behavior: none;
-}
-
-body {
-  font-family: system-ui, -apple-system, Arial;
   background: #0f1220;
   color: #fff;
+  font-family: system-ui, -apple-system, Arial;
 }
 
-/* ===== APP ===== */
 #app {
   height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 16px;
-  gap: 16px;
+  padding: 10px;
 }
 
-/* ===== TOP BAR ===== */
 .top-bar {
   width: 100%;
   display: grid;
   grid-template-columns: auto 1fr auto;
-  align-items: center;
-  gap: 12px;
+  gap: 8px;
   font-size: 14px;
-  opacity: 0.95;
 }
 
-.top-right span {
-  margin-left: 8px;
-  white-space: nowrap;
-}
+.top-right span { margin-left: 6px; }
 
-/* ===== XP BAR ===== */
-.xp-bar.thin {
+.xp-bar {
   height: 6px;
-  background: rgba(255,255,255,0.15);
+  background: rgba(255,255,255,.15);
   border-radius: 6px;
   overflow: hidden;
 }
-
 #xpFill {
   height: 100%;
   width: 0%;
   background: linear-gradient(90deg,#6cf,#6f6);
-  transition: width 0.3s ease;
+  transition: width .3s ease;
 }
 
-/* ===== STATUS ===== */
 .status {
-  min-height: 32px;
+  min-height: 48px;
   text-align: center;
-  font-size: 15px;
-  opacity: 0.9;
+  white-space: pre-line;
+  opacity: .9;
+  margin: 8px 0;
 }
 
-/* ===== HERO ===== */
 .hero {
   position: relative;
   width: 80%;
-  max-width: 360px;
+  max-width: 320px;
+  max-height: 42vh;
   aspect-ratio: 1 / 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
-
 .hero img {
   width: 100%;
   border-radius: 50%;
   animation: idle 4s ease-in-out infinite;
 }
-
 @keyframes idle {
   0%,100% { transform: scale(1); }
   50% { transform: scale(1.02); }
 }
 
-/* ===== TAP FX ===== */
 .fx {
   position: absolute;
   inset: 0;
   border-radius: 50%;
   pointer-events: none;
 }
-
-.glow {
-  animation: glow 0.4s ease;
+.pulse {
+  animation: pulse .4s ease;
+}
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 rgba(255,255,255,0); }
+  50% { box-shadow: 0 0 30px rgba(120,200,255,.7); }
+  100% { box-shadow: 0 0 0 rgba(255,255,255,0); }
+}
+.glow-epic {
+  box-shadow: 0 0 40px rgba(255,180,80,.8);
 }
 
-@keyframes glow {
-  0% { box-shadow: 0 0 0 rgba(255,255,255,0); }
-  50% { box-shadow: 0 0 30px rgba(120,200,255,0.7); }
-  100% { box-shadow: 0 0 0 rgba(255,255,255,0); }
+.chat {
+  width: 100%;
+  display: flex;
+  gap: 6px;
+}
+.chat input {
+  flex: 1;
+  padding: 8px;
+  border-radius: 6px;
+  border: none;
+}
+.chat button {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: none;
+  background: #6cf;
+}
+
+.panel {
+  width: 100%;
+  margin-top: 8px;
+  font-size: 13px;
+  opacity: .85;
 }

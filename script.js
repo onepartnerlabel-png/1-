@@ -1,211 +1,171 @@
-// ===== TELEGRAM =====
 const tg = window.Telegram?.WebApp;
-if (tg) {
-  tg.ready();
-  tg.expand();
-}
+if (tg) { tg.ready(); tg.expand(); }
 
-// ===== ENTITIES =====
+// ===== CONFIG =====
+const CFG = {
+  TASKS_PER_DAY: 3,
+  COOLDOWN_HOURS: 2,
+  XP: { common: 20, rare: 40, epic: 80 },
+  MONEY_PER_TAP: 100,
+  TAPS_PER_SILVER: 10,
+  SILVER_PER_GOLD: 10
+};
+
+// ===== USER =====
 const User = {
-  xp: Number(localStorage.getItem("xp")) || 0,
-  level: 1,
-  streak: Number(localStorage.getItem("streak")) || 0,
-
-  taps: Number(localStorage.getItem("taps")) || 0,
-
-  silver: Number(localStorage.getItem("silver")) || 0, // 10 taps
-  gold: Number(localStorage.getItem("gold")) || 0,     // 100 taps
-
-  money: Number(localStorage.getItem("money")) || 0,
-
+  id: tg?.initDataUnsafe?.user?.id || "local",
+  name: tg?.initDataUnsafe?.user?.first_name || "Игрок",
+  xp: +localStorage.getItem("xp") || 0,
+  streak: +localStorage.getItem("streak") || 0,
+  taps: +localStorage.getItem("taps") || 0,
+  silver: +localStorage.getItem("silver") || 0,
+  gold: +localStorage.getItem("gold") || 0,
+  money: +localStorage.getItem("money") || 0,
+  achievements: JSON.parse(localStorage.getItem("ach")) || [],
   friends: JSON.parse(localStorage.getItem("friends")) || [],
-  likesGivenToday: 0,
-
   lastDay: localStorage.getItem("lastDay") || ""
 };
 
-const TaskState = {
-  current: null,
-  completedToday: 0,
-  lastTaskText: localStorage.getItem("lastTaskText") || "",
-  nextAvailableAt: 0
-};
-
-const Economy = {
-  XP_PER_TASK: 20,
-  MONEY_PER_TAP: 100,
-
-  TAPS_PER_SILVER: 10,
-  SILVER_PER_GOLD: 10,
-
-  TASKS_PER_DAY: 3,
-  COOLDOWN_HOURS: 2
-};
-
-const GameState = {
-  screen: "idle" // idle | task | cooldown
-};
-
-// ===== DOM =====
-const avatarBox = document.getElementById("avatarBox");
-const avatar = document.getElementById("avatar");
-
-const levelEl = document.getElementById("level");
-const streakEl = document.getElementById("streak");
-const xpFill = document.getElementById("xpFill");
-
-const silverEl = document.getElementById("silver");
-const goldEl = document.getElementById("gold");
-const moneyEl = document.getElementById("money");
-
-const statusText = document.getElementById("statusText");
-
-// ===== LEVELS =====
-function xpForLevel(lvl) {
-  return Math.floor(30 * Math.pow(lvl, 1.4));
-}
-
-function calculateLevel(xp) {
-  let lvl = 1;
-  while (xp >= xpForLevel(lvl + 1)) lvl++;
-  return lvl;
-}
-
 // ===== DAY =====
-function today() {
-  return new Date().toISOString().slice(0, 10);
+let Day = JSON.parse(localStorage.getItem("day")) || newDay();
+function newDay() {
+  return { date: today(), done: 0, task: null, nextAt: 0, history: [] };
 }
 
-function checkNewDay() {
-  if (User.lastDay !== today()) {
-    User.lastDay = today();
-    User.streak++;
-    TaskState.completedToday = 0;
-    User.likesGivenToday = 0;
-  }
-}
-
-// ===== TASKS =====
+// ===== TASKS (персонализация) =====
 const TASKS = [
-  "Сделай 3 глубоких вдоха",
-  "Выпей стакан воды",
-  "Убери один предмет рядом",
-  "Запиши одну мысль",
-  "Сделай 1 шаг к цели"
+  { text: "Сделай 3 глубоких вдоха", rarity: "common", tags: ["calm"] },
+  { text: "Выпей стакан воды", rarity: "common", tags: ["body"] },
+  { text: "Убери 1 предмет рядом", rarity: "common", tags: ["space"] },
+  { text: "Запиши мысль о дне", rarity: "rare", tags: ["mind"] },
+  { text: "Сделай шаг к цели", rarity: "rare", tags: ["growth"] },
+  { text: "1 минута тишины", rarity: "epic", tags: ["focus"] }
 ];
 
+// ===== DOM =====
+const el = id => document.getElementById(id);
+const avatarBox = el("avatarBox");
+const avatar = el("avatar");
+const fx = el("fx");
+const statusText = el("statusText");
+const chatInput = el("chatInput");
+const chatSend = el("chatSend");
+const profilePanel = el("profilePanel");
+const friendsPanel = el("friendsPanel");
+const rankPanel = el("rankPanel");
+
+// ===== HELPERS =====
+function today() { return new Date().toISOString().slice(0,10); }
+function hour() { return new Date().getHours(); }
+function xpForLevel(l) { return Math.floor(30 * Math.pow(l, 1.4)); }
+function levelByXP(x) { let l=1; while(x>=xpForLevel(l+1)) l++; return l; }
+
+// ===== CHAT =====
+function avatarReply(text) {
+  const t = text.toLowerCase();
+  if (t.includes("утро")) return "Доброе утро ☀️ Сегодня будет хороший шаг.";
+  if (t.includes("ноч")) return "Спокойной ночи 🌙 Ты молодец.";
+  return "Я рядом. Маленькие шаги важны.";
+}
+chatSend.onclick = () => {
+  if (!chatInput.value) return;
+  statusText.textContent = "💬 " + avatarReply(chatInput.value);
+  chatInput.value = "";
+};
+
+// ===== TASK =====
+function canActivateTask() {
+  return !Day.task && Day.done < CFG.TASKS_PER_DAY && Date.now() >= Day.nextAt;
+}
 function activateTask() {
-  if (TaskState.completedToday >= Economy.TASKS_PER_DAY) return;
-  TaskState.current = TASKS[Math.floor(Math.random() * TASKS.length)];
-  GameState.screen = "task";
+  if (!canActivateTask()) return;
+  const pool = TASKS[Math.floor(Math.random()*TASKS.length)];
+  Day.task = pool;
+  avatar.classList.toggle("glow-epic", pool.rarity==="epic");
 }
 
 // ===== TAP =====
-avatarBox.addEventListener("click", () => {
-  avatar.classList.remove("glow");
-  void avatar.offsetWidth;
-  avatar.classList.add("glow");
-
-  if (tg) tg.HapticFeedback.impactOccurred("light");
+avatarBox.onclick = () => {
+  fx.classList.remove("pulse"); void fx.offsetWidth; fx.classList.add("pulse");
 
   User.taps++;
-  User.money += Economy.MONEY_PER_TAP;
+  User.money += CFG.MONEY_PER_TAP;
 
-  // серебро
-  if (User.taps % Economy.TAPS_PER_SILVER === 0) {
-    User.silver++;
+  if (User.taps % CFG.TAPS_PER_SILVER === 0) User.silver++;
+  if (User.silver >= CFG.SILVER_PER_GOLD) {
+    User.gold++; User.silver = 0;
+    statusText.textContent = "🥇 Получено золото!";
   }
 
-  // золото
-  if (User.silver >= Economy.SILVER_PER_GOLD) {
-    User.gold++;
-    User.silver = 0;
-    applyGoldBonus();
-  }
-
-  if (GameState.screen === "task" && TaskState.current) {
-    completeTask();
+  if (Day.task) {
+    User.xp += CFG.XP[Day.task.rarity];
+    Day.history.push(Day.task.text);
+    Day.done++;
+    Day.task = null;
+    Day.nextAt = Date.now() + CFG.COOLDOWN_HOURS*3600000;
+    statusText.textContent = "✅ Выполнено:\n" + Day.history.at(-1);
   }
 
   render();
-});
+};
 
-// ===== TASK COMPLETE =====
-function completeTask() {
-  User.xp += Economy.XP_PER_TASK;
-  TaskState.completedToday++;
-  TaskState.lastTaskText = TaskState.current;
-  TaskState.current = null;
-
-  TaskState.nextAvailableAt =
-    Date.now() + Economy.COOLDOWN_HOURS * 3600000;
-
-  GameState.screen = "cooldown";
-
-  statusText.textContent =
-    `✅ Последний шаг: ${TaskState.lastTaskText}  +${Economy.XP_PER_TASK} XP`;
+// ===== FRIENDS (Telegram MVP) =====
+function loadFriends() {
+  if (!tg?.initDataUnsafe?.user) return;
+  User.friends = [{ id: 1, name: "Друг", liked: false }];
 }
 
-// ===== BONUSES (GOLD) =====
-function applyGoldBonus() {
-  const bonus = Math.random() > 0.5
-    ? "⏱ −1 час ожидания"
-    : "✨ +50% XP к следующему заданию";
-
-  statusText.textContent = `🥇 Бонус получен: ${bonus}`;
+// ===== RANK (mock) =====
+function renderRank() {
+  rankPanel.textContent = "🌍 Ранг: #" + (1000 - levelByXP(User.xp));
 }
 
-// ===== SOCIAL MVP =====
-function likeFriend(friendId) {
-  if (User.likesGivenToday >= 1) return;
-  User.likesGivenToday++;
-  // friend.likes++
-}
-
-// ===== RENDER =====
+// ===== PROFILE =====
+function renderProfile() {
+  profilePanel.textContent =
+    `👤 ${User.name}
+LVL ${levelByXP(User.xp)}
+XP ${User.xp}
+Заданий сегодня: ${Day.done}/${CFG.TASKS_PER_DAY}
+История: ${Day.history.join(" • ") || "—"}`;
+}// ===== RENDER =====
 function render() {
-  checkNewDay();
-
-  User.level = calculateLevel(User.xp);
-
-  const prev = xpForLevel(User.level);
-  const next = xpForLevel(User.level + 1);
-  const progress = ((User.xp - prev) / (next - prev)) * 100;
-
-  levelEl.textContent = User.level;
-  streakEl.textContent = User.streak;
-  xpFill.style.width = Math.min(progress, 100) + "%";
-  silverEl.textContent = User.silver;
-  goldEl.textContent = User.gold;
-  moneyEl.textContent = User.money;
-
-  if (GameState.screen === "idle" && !TaskState.current) {
-    activateTask();
+  if (User.lastDay !== today()) {
+    User.lastDay = today();
+    User.streak++;
+    Day = newDay();
   }
 
-  if (GameState.screen === "task") {
-    statusText.textContent = TaskState.current;
-  }
+  el("level").textContent = levelByXP(User.xp);
+  el("streak").textContent = User.streak;
+  el("silver").textContent = User.silver;
+  el("gold").textContent = User.gold;
+  el("money").textContent = User.money;
 
-  if (GameState.screen === "cooldown") {
-    const m = Math.ceil((TaskState.nextAvailableAt - Date.now()) / 60000);
-    if (m <= 0) GameState.screen = "idle";
-    else
-      statusText.textContent =
-        `⏳ Следующий шаг через ${m} мин ✨ Можно тапать`;
-  }
+  const lvl = levelByXP(User.xp);
+  const prev = xpForLevel(lvl);
+  const next = xpForLevel(lvl+1);
+  el("xpFill").style.width =
+    Math.min(((User.xp-prev)/(next-prev))*100,100)+"%";
 
-  // SAVE
-  localStorage.setItem("xp", User.xp);
-  localStorage.setItem("streak", User.streak);
-  localStorage.setItem("taps", User.taps);
-  localStorage.setItem("silver", User.silver);
-  localStorage.setItem("gold", User.gold);
-  localStorage.setItem("money", User.money);
-  localStorage.setItem("lastTaskText", TaskState.lastTaskText);
-  localStorage.setItem("lastDay", User.lastDay);
+  if (canActivateTask()) activateTask();
+  if (Day.task) statusText.textContent = Day.task.text;
+
+  renderProfile();
+  renderRank();
+
+  localStorage.setItem("xp",User.xp);
+  localStorage.setItem("streak",User.streak);
+  localStorage.setItem("taps",User.taps);
+  localStorage.setItem("silver",User.silver);
+  localStorage.setItem("gold",User.gold);
+  localStorage.setItem("money",User.money);
+  localStorage.setItem("friends",JSON.stringify(User.friends));
+  localStorage.setItem("lastDay",User.lastDay);
+  localStorage.setItem("day",JSON.stringify(Day));
 }
 
 // ===== START =====
+loadFriends();
 render();
-setInterval(render, 60000);
+setInterval(render,60000);
