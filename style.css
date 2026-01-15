@@ -17,6 +17,7 @@ html, body {
   padding: 10px;
 }
 
+/* TOP */
 .top-bar {
   width: 100%;
   display: grid;
@@ -24,7 +25,6 @@ html, body {
   gap: 8px;
   font-size: 14px;
 }
-
 .top-right span { margin-left: 6px; }
 
 .xp-bar {
@@ -40,20 +40,26 @@ html, body {
   transition: width .3s ease;
 }
 
+/* STATUS */
 .status {
-  min-height: 48px;
+  min-height: 64px;
+  max-height: 96px;
+  margin: 8px 0 4px;
   text-align: center;
   white-space: pre-line;
-  opacity: .9;
-  margin: 8px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: .95;
 }
 
+/* AVATAR */
 .hero {
   position: relative;
-  width: 80%;
-  max-width: 320px;
-  max-height: 42vh;
+  width: 70%;
+  max-width: 280px;
   aspect-ratio: 1 / 1;
+  margin: 6px 0;
 }
 .hero img {
   width: 100%;
@@ -65,6 +71,7 @@ html, body {
   50% { transform: scale(1.02); }
 }
 
+/* FX */
 .fx {
   position: absolute;
   inset: 0;
@@ -72,7 +79,7 @@ html, body {
   pointer-events: none;
 }
 .pulse {
-  animation: pulse .4s ease;
+  animation: pulse .35s ease;
 }
 @keyframes pulse {
   0% { box-shadow: 0 0 0 rgba(255,255,255,0); }
@@ -83,10 +90,12 @@ html, body {
   box-shadow: 0 0 40px rgba(255,180,80,.8);
 }
 
+/* CHAT */
 .chat {
   width: 100%;
   display: flex;
   gap: 6px;
+  margin-top: 6px;
 }
 .chat input {
   flex: 1;
@@ -101,9 +110,13 @@ html, body {
   background: #6cf;
 }
 
+/* PANELS */
 .panel {
   width: 100%;
-  margin-top: 8px;
+  margin-top: 6px;
   font-size: 13px;
   opacity: .85;
+  white-space: pre-line;
 }
+
+

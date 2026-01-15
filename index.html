@@ -12,9 +12,12 @@
 
   <!-- TOP BAR -->
   <div class="top-bar">
-    <div class="lvl">LVL <b id="level">1</b></div>
+    <div class="lvl">
+      LVL <b id="level">1</b><br>
+      <small id="rankText">#—</small>
+    </div>
 
-    <div class="xp-bar thin">
+    <div class="xp-bar">
       <div id="xpFill"></div>
     </div>
 
@@ -27,28 +30,22 @@
   </div>
 
   <!-- STATUS -->
-  <div class="status" id="statusText"></div>
+  <div class="status" id="statusText">Загрузка…</div>
 
   <!-- AVATAR -->
   <div class="hero" id="avatarBox">
-    <img id="avatar" src="m_lv1.gif">
+    <img id="avatar" src="m_lv1.gif" alt="avatar">
     <div class="fx" id="fx"></div>
   </div>
+
+  <!-- HISTORY -->
+  <div class="panel" id="historyPanel"></div>
 
   <!-- CHAT -->
   <div class="chat">
     <input id="chatInput" placeholder="Напиши аватару…" />
     <button id="chatSend">➤</button>
   </div>
-
-  <!-- PROFILE -->
-  <div class="panel" id="profilePanel"></div>
-
-  <!-- FRIENDS -->
-  <div class="panel" id="friendsPanel"></div>
-
-  <!-- RANK -->
-  <div class="panel" id="rankPanel"></div>
 
 </div>
 
