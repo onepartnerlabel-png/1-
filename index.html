@@ -10,29 +10,34 @@
 
 <div id="app">
 
-  <!-- TOP -->
-  <div class="top">
-    <div class="lvl">LVL <span id="level">1</span></div>
-    <div class="streak">🔥 <span id="streak">0</span></div>
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <div class="top-left">
+      <span class="lvl">LVL <b id="level">1</b></span>
+    </div>
+
+    <div class="top-center">
+      <div class="xp-bar thin">
+        <div id="xpFill"></div>
+      </div>
+    </div>
+
+    <div class="top-right">
+      <span>🔥 <b id="streak">0</b></span>
+      <span>🥈 <b id="silver">0</b></span>
+      <span>🥇 <b id="gold">0</b></span>
+      <span>💰 <b id="money">0</b></span>
+    </div>
   </div>
+
+  <!-- STATUS (ГЛАВНЫЙ ТЕКСТ) -->
+  <div class="status" id="statusText">Загрузка…</div>
 
   <!-- AVATAR -->
   <div class="hero" id="avatarBox">
     <img id="avatar" src="m_lv1.gif" alt="avatar"/>
     <div class="fx" id="fx"></div>
   </div>
-
-  <!-- PROGRESS -->
-  <div class="progress">
-    <div class="xp-bar">
-      <div id="xpFill"></div>
-    </div>
-    <div class="xp-text" id="xpText">0 / 0 XP</div>
-    <div class="fragments">✨ <span id="fragCount">0</span></div>
-  </div>
-
-  <!-- STATUS -->
-  <div class="status" id="statusText">Загрузка…</div>
 
 </div>
 

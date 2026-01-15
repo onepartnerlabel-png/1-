@@ -5,177 +5,207 @@ if (tg) {
   tg.expand();
 }
 
-// ===== НАСТРОЙКИ =====
-const XP_TASK = 10;
-const FRAG_LIMIT = 20;
-const TASKS_PER_DAY = 3;
-const MIN_DELAY_HOURS = 2;
-const FRAG_FOR_BONUS = 10;
+// ===== ENTITIES =====
+const User = {
+  xp: Number(localStorage.getItem("xp")) || 0,
+  level: 1,
+  streak: Number(localStorage.getItem("streak")) || 0,
 
-// ===== ДАННЫЕ =====
+  taps: Number(localStorage.getItem("taps")) || 0,
+
+  silver: Number(localStorage.getItem("silver")) || 0, // 10 taps
+  gold: Number(localStorage.getItem("gold")) || 0,     // 100 taps
+
+  money: Number(localStorage.getItem("money")) || 0,
+
+  friends: JSON.parse(localStorage.getItem("friends")) || [],
+  likesGivenToday: 0,
+
+  lastDay: localStorage.getItem("lastDay") || ""
+};
+
+const TaskState = {
+  current: null,
+  completedToday: 0,
+  lastTaskText: localStorage.getItem("lastTaskText") || "",
+  nextAvailableAt: 0
+};
+
+const Economy = {
+  XP_PER_TASK: 20,
+  MONEY_PER_TAP: 100,
+
+  TAPS_PER_SILVER: 10,
+  SILVER_PER_GOLD: 10,
+
+  TASKS_PER_DAY: 3,
+  COOLDOWN_HOURS: 2
+};
+
+const GameState = {
+  screen: "idle" // idle | task | cooldown
+};
+
+// ===== DOM =====
+const avatarBox = document.getElementById("avatarBox");
+const avatar = document.getElementById("avatar");
+
+const levelEl = document.getElementById("level");
+const streakEl = document.getElementById("streak");
+const xpFill = document.getElementById("xpFill");
+
+const silverEl = document.getElementById("silver");
+const goldEl = document.getElementById("gold");
+const moneyEl = document.getElementById("money");
+
+const statusText = document.getElementById("statusText");
+
+// ===== LEVELS =====
+function xpForLevel(lvl) {
+  return Math.floor(30 * Math.pow(lvl, 1.4));
+}
+
+function calculateLevel(xp) {
+  let lvl = 1;
+  while (xp >= xpForLevel(lvl + 1)) lvl++;
+  return lvl;
+}
+
+// ===== DAY =====
+function today() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function checkNewDay() {
+  if (User.lastDay !== today()) {
+    User.lastDay = today();
+    User.streak++;
+    TaskState.completedToday = 0;
+    User.likesGivenToday = 0;
+  }
+}
+
+// ===== TASKS =====
 const TASKS = [
   "Сделай 3 глубоких вдоха",
   "Выпей стакан воды",
   "Убери один предмет рядом",
   "Запиши одну мысль",
-  "Сделай 1 шаг к цели",
-  "Назови одну вещь, за которую благодарен"
+  "Сделай 1 шаг к цели"
 ];
 
-const MSG_IDLE = [
-  "Ты в потоке ✨",
-  "Рост — это привычка",
-  "Сегодня всё выполнено"
-];
-
-// ===== ХРАНЕНИЕ =====
-let xp = Number(localStorage.getItem("xp")) || 0;
-let fragments = Number(localStorage.getItem("fragments")) || 0;
-let streak = Number(localStorage.getItem("streak")) || 0;
-let lastDay = localStorage.getItem("lastDay") || "";
-let lastTaskText = localStorage.getItem("lastTaskText") || "";
-
-let day = JSON.parse(localStorage.getItem("day")) || newDay();
-
-// ===== ЭЛЕМЕНТЫ =====
-const avatarBox = document.getElementById("avatarBox");
-const avatar = document.getElementById("avatar");
-const fx = document.getElementById("fx");
-const levelEl = document.getElementById("level");
-const streakEl = document.getElementById("streak");
-const xpFill = document.getElementById("xpFill");
-const xpText = document.getElementById("xpText");
-const statusText = document.getElementById("statusText");
-const fragEl = document.getElementById("fragments");
-
-// ===== УРОВНИ =====
-function xpForLevel(lvl) {
-  return Math.floor(50 * Math.pow(lvl, 1.5));
-}
-
-function levelByXP(x) {
-  let l = 1;
-  while (x >= xpForLevel(l + 1)) l++;
-  return l;
-}
-
-// ===== ДЕНЬ =====
-function today() {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function newDay() {
-  return { done: 0, task: null, nextAt: 0 };
-}
-
-function checkDay() {
-  if (lastDay !== today()) {
-    lastDay = today();
-    day = newDay();
-    fragments = 0;
-    streak++;
-    save();
-  }
-}
-
-// ===== ЗАДАНИЯ =====
 function activateTask() {
-  if (day.done >= TASKS_PER_DAY) return;
-  day.task = TASKS[Math.floor(Math.random() * TASKS.length)];
+  if (TaskState.completedToday >= Economy.TASKS_PER_DAY) return;
+  TaskState.current = TASKS[Math.floor(Math.random() * TASKS.length)];
+  GameState.screen = "task";
 }
 
-function canActivate() {
-  return !day.task && Date.now() >= day.nextAt && day.done < TASKS_PER_DAY;
-}
-
-// ===== БОНУС =====
-function checkBonus() {
-  if (fragments > 0 && fragments % FRAG_FOR_BONUS === 0) {
-    if (day.nextAt > Date.now()) {
-      day.nextAt -= 3600000;
-      statusText.textContent = "🎁 Бонус: −1 час ожидания";
-    } else {
-      xp += 5;
-      statusText.textContent = "🎁 Бонус: +5 XP к росту";
-    }
-  }
-}
-
-// ===== РЕНДЕР =====
-function render() {
-  checkDay();
-
-  const lvl = levelByXP(xp);
-  const prev = xpForLevel(lvl);
-  const next = xpForLevel(lvl + 1);
-
-  levelEl.textContent = lvl;
-  streakEl.textContent = streak;
-
-  const cur = Math.max(0, xp - prev);
-  const need = next - prev;
-  xpFill.style.width = Math.min((cur / need) * 100, 100) + "%";
-  xpText.textContent = `${cur} / ${need} XP`;
-
-  if (fragEl) fragEl.textContent = fragments;
-
-  if (canActivate()) activateTask();
-
-  if (day.task) {
-    statusText.textContent = day.task;
-  } else if (day.done >= TASKS_PER_DAY) {
-    statusText.textContent = lastTaskText
-      ? `🧠 Последний шаг:\n${lastTaskText}`
-      : "💙 Сегодня ты стал лучше";
-  } else {
-    const m = Math.ceil((day.nextAt - Date.now()) / 60000);
-    statusText.textContent = `⏳ Следующий шаг через ${m} мин\n✨ Можно собирать фрагменты`;
-  }
-
-  save();
-}
-
-// ===== ТАП =====
+// ===== TAP =====
 avatarBox.addEventListener("click", () => {
-  if (fx) {
-    fx.classList.remove("pulse");
-    void fx.offsetWidth;
-    fx.classList.add("pulse");
-  }
+  avatar.classList.remove("glow");
+  void avatar.offsetWidth;
+  avatar.classList.add("glow");
 
   if (tg) tg.HapticFeedback.impactOccurred("light");
 
-  if (day.task) {
-    xp += XP_TASK;
-    day.done++;
-    lastTaskText = day.task;
-    day.task = null;
-    day.nextAt = Date.now() + MIN_DELAY_HOURS * 3600000;
+  User.taps++;
+  User.money += Economy.MONEY_PER_TAP;
 
-    statusText.textContent = `✅ Последний шаг:\n${lastTaskText}\n+${XP_TASK} XP`;
-    } else {
-    if (fragments < FRAG_LIMIT) {
-      fragments++;
-      statusText.textContent =
-        MSG_IDLE[Math.floor(Math.random() * MSG_IDLE.length)];
-      checkBonus();
-    } else {
-      statusText.textContent = "Хватит на сегодня ✨";
-    }
+  // серебро
+  if (User.taps % Economy.TAPS_PER_SILVER === 0) {
+    User.silver++;
+  }
+
+  // золото
+  if (User.silver >= Economy.SILVER_PER_GOLD) {
+    User.gold++;
+    User.silver = 0;
+    applyGoldBonus();
+  }
+
+  if (GameState.screen === "task" && TaskState.current) {
+    completeTask();
   }
 
   render();
 });
 
-// ===== SAVE =====
-function save() {
-  localStorage.setItem("xp", xp);
-  localStorage.setItem("fragments", fragments);
-  localStorage.setItem("streak", streak);
-  localStorage.setItem("lastDay", lastDay);
-  localStorage.setItem("day", JSON.stringify(day));
-  localStorage.setItem("lastTaskText", lastTaskText);
+// ===== TASK COMPLETE =====
+function completeTask() {
+  User.xp += Economy.XP_PER_TASK;
+  TaskState.completedToday++;
+  TaskState.lastTaskText = TaskState.current;
+  TaskState.current = null;
+
+  TaskState.nextAvailableAt =
+    Date.now() + Economy.COOLDOWN_HOURS * 3600000;
+
+  GameState.screen = "cooldown";
+
+  statusText.textContent =
+    `✅ Последний шаг: ${TaskState.lastTaskText}  +${Economy.XP_PER_TASK} XP`;
+}
+
+// ===== BONUSES (GOLD) =====
+function applyGoldBonus() {
+  const bonus = Math.random() > 0.5
+    ? "⏱ −1 час ожидания"
+    : "✨ +50% XP к следующему заданию";
+
+  statusText.textContent = `🥇 Бонус получен: ${bonus}`;
+}
+
+// ===== SOCIAL MVP =====
+function likeFriend(friendId) {
+  if (User.likesGivenToday >= 1) return;
+  User.likesGivenToday++;
+  // friend.likes++
+}
+
+// ===== RENDER =====
+function render() {
+  checkNewDay();
+
+  User.level = calculateLevel(User.xp);
+
+  const prev = xpForLevel(User.level);
+  const next = xpForLevel(User.level + 1);
+  const progress = ((User.xp - prev) / (next - prev)) * 100;
+
+  levelEl.textContent = User.level;
+  streakEl.textContent = User.streak;
+  xpFill.style.width = Math.min(progress, 100) + "%";
+  silverEl.textContent = User.silver;
+  goldEl.textContent = User.gold;
+  moneyEl.textContent = User.money;
+
+  if (GameState.screen === "idle" && !TaskState.current) {
+    activateTask();
+  }
+
+  if (GameState.screen === "task") {
+    statusText.textContent = TaskState.current;
+  }
+
+  if (GameState.screen === "cooldown") {
+    const m = Math.ceil((TaskState.nextAvailableAt - Date.now()) / 60000);
+    if (m <= 0) GameState.screen = "idle";
+    else
+      statusText.textContent =
+        `⏳ Следующий шаг через ${m} мин ✨ Можно тапать`;
+  }
+
+  // SAVE
+  localStorage.setItem("xp", User.xp);
+  localStorage.setItem("streak", User.streak);
+  localStorage.setItem("taps", User.taps);
+  localStorage.setItem("silver", User.silver);
+  localStorage.setItem("gold", User.gold);
+  localStorage.setItem("money", User.money);
+  localStorage.setItem("lastTaskText", TaskState.lastTaskText);
+  localStorage.setItem("lastDay", User.lastDay);
 }
 
 // ===== START =====
 render();
+setInterval(render, 60000);

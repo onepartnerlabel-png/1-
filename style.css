@@ -16,22 +16,53 @@ body {
   color: #fff;
 }
 
+/* ===== APP ===== */
 #app {
   height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-between;
   padding: 16px;
+  gap: 16px;
 }
 
-/* ===== TOP ===== */
-.top {
+/* ===== TOP BAR ===== */
+.top-bar {
   width: 100%;
-  display: flex;
-  justify-content: space-between;
-  opacity: 0.9;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
   font-size: 14px;
+  opacity: 0.95;
+}
+
+.top-right span {
+  margin-left: 8px;
+  white-space: nowrap;
+}
+
+/* ===== XP BAR ===== */
+.xp-bar.thin {
+  height: 6px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+#xpFill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg,#6cf,#6f6);
+  transition: width 0.3s ease;
+}
+
+/* ===== STATUS ===== */
+.status {
+  min-height: 32px;
+  text-align: center;
+  font-size: 15px;
+  opacity: 0.9;
 }
 
 /* ===== HERO ===== */
@@ -52,11 +83,11 @@ body {
 }
 
 @keyframes idle {
-  0%, 100% { transform: scale(1); }
+  0%,100% { transform: scale(1); }
   50% { transform: scale(1.02); }
 }
 
-/* ===== FX ===== */
+/* ===== TAP FX ===== */
 .fx {
   position: absolute;
   inset: 0;
@@ -64,47 +95,12 @@ body {
   pointer-events: none;
 }
 
-.pulse {
-  animation: pulse 0.4s ease;
+.glow {
+  animation: glow 0.4s ease;
 }
 
-@keyframes pulse {
+@keyframes glow {
   0% { box-shadow: 0 0 0 rgba(255,255,255,0); }
-  50% { box-shadow: 0 0 30px rgba(255,255,255,0.6); }
+  50% { box-shadow: 0 0 30px rgba(120,200,255,0.7); }
   100% { box-shadow: 0 0 0 rgba(255,255,255,0); }
-}
-
-/* ===== PROGRESS ===== */
-.progress {
-  width: 100%;
-}
-
-.xp-bar {
-  width: 100%;
-  height: 10px;
-  background: rgba(255,255,255,0.15);
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-#xpFill {
-  height: 100%;
-  width: 0%;
-  background: linear-gradient(90deg, #7cf, #6f6);
-  transition: width 0.4s ease;
-}
-
-.xp-text {
-  margin-top: 6px;
-  text-align: center;
-  opacity: 0.85;
-  font-size: 14px;
-}
-
-/* ===== STATUS ===== */
-.status {
-  min-height: 32px;
-  text-align: center;
-  opacity: 0.9;
-  font-size: 15px;
 }
