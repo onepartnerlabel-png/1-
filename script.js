@@ -17,6 +17,27 @@ const today = () => new Date().toISOString().slice(0,10);
 const xpForLevel = l => Math.floor(30 * Math.pow(l, 1.4));
 const levelByXP = x => { let l=1; while(x>=xpForLevel(l+1)) l++; return l; };
 
+// ===== GENDER (ВЫБОР ПРИ ПЕРВОМ ЗАПУСКЕ) =====
+let userGender = localStorage.getItem("gender");
+
+function askGenderIfNeeded() {
+  if (userGender) return;
+
+  const isMale = confirm(
+    "Выбери аватар:\n\nОК — 👨 Мужской\nОтмена — 👩 Женский"
+  );
+
+  userGender = isMale ? "m" : "f";
+  localStorage.setItem("gender", userGender);
+}
+
+// ===== AVATAR =====
+function getAvatarSrc(gender, level) {
+  if (level < 5) return `assets/avatars/${gender}_base.png`;
+  if (level < 15) return `assets/avatars/${gender}_plus.png`;
+  return `assets/avatars/${gender}_pro.png`;
+}
+
 // ===== USER =====
 const User = {
   xp: +localStorage.getItem("xp") || 0,
@@ -65,8 +86,8 @@ el("avatarBox").onclick = () => {
 
   if (User.taps % CFG.TAPS_PER_SILVER === 0) User.silver++;
   if (User.silver >= CFG.SILVER_PER_GOLD) {
-    User.gold++; User.silver = 0;
-    el("statusText").textContent = "🥇 Получено золото!";
+    User.gold++;
+    User.silver = 0;
   }
 
   if (Day.task) {
@@ -75,7 +96,6 @@ el("avatarBox").onclick = () => {
     Day.done++;
     Day.task = null;
     Day.nextAt = Date.now() + CFG.COOLDOWN_HOURS * 3600000;
-    el("statusText").textContent = "✅ Выполнено:\n" + Day.history.at(-1);
   }
 
   render();
@@ -83,8 +103,7 @@ el("avatarBox").onclick = () => {
 
 // ===== CHAT =====
 el("chatSend").onclick = () => {
-  const v = el("chatInput").value.trim();
-  if (!v) return;
+  if (!el("chatInput").value.trim()) return;
   el("statusText").textContent = "💬 Я рядом. Маленькие шаги важны.";
   el("chatInput").value = "";
 };
@@ -99,14 +118,16 @@ function render(){
 
   if (canActivateTask()) activateTask();
 
-  el("level").textContent = levelByXP(User.xp);
-  el("rankText").textContent = "#" + (1000 - levelByXP(User.xp));
+  const lvl = levelByXP(User.xp);
+  el("level").textContent = lvl;
+  el("rankText").textContent = "#" + (1000 - lvl);
+  el("avatar").src = getAvatarSrc(userGender, lvl);
+
   el("streak").textContent = User.streak;
   el("silver").textContent = User.silver;
   el("gold").textContent = User.gold;
   el("money").textContent = User.money;
 
-  const lvl = levelByXP(User.xp);
   const prev = xpForLevel(lvl);
   const next = xpForLevel(lvl+1);
   el("xpFill").style.width =
@@ -136,7 +157,6 @@ function render(){
 }
 
 // ===== START =====
+askGenderIfNeeded();
 render();
 setInterval(render,60000);
-
-

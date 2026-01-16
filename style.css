@@ -40,26 +40,13 @@ html, body {
   transition: width .3s ease;
 }
 
-/* STATUS */
-.status {
-  min-height: 64px;
-  max-height: 96px;
-  margin: 8px 0 4px;
-  text-align: center;
-  white-space: pre-line;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: .95;
-}
-
 /* AVATAR */
 .hero {
   position: relative;
-  width: 70%;
-  max-width: 280px;
+  width: 72%;
+  max-width: 300px;
   aspect-ratio: 1 / 1;
-  margin: 6px 0;
+  margin: 10px 0;
 }
 .hero img {
   width: 100%;
@@ -90,6 +77,18 @@ html, body {
   box-shadow: 0 0 40px rgba(255,180,80,.8);
 }
 
+/* STATUS */
+.status {
+  min-height: 64px;
+  margin: 6px 0;
+  text-align: center;
+  white-space: pre-line;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: .95;
+}
+
 /* CHAT */
 .chat {
   width: 100%;
@@ -118,5 +117,3 @@ html, body {
   opacity: .85;
   white-space: pre-line;
 }
-
-
